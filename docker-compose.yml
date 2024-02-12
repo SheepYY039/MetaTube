@@ -1,4 +1,6 @@
-version: '3.8'
+# @format
+
+version: "3.8"
 
 services:
   metatube:
@@ -25,6 +27,6 @@ services:
     #   - "/dev/dri/renderD128:/dev/dri/renderD128"
 
 volumes:
-  metatube_downloads:
-  metatube_db:
-  metatube_migrations:
+  metatube_downloads: {}
+  metatube_db: {}
+  metatube_migrations: {}
