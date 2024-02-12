@@ -2,13 +2,13 @@ from gevent import monkey
 
 monkey.patch_all()
 import logging
-from distutils.util import strtobool
 
 from flask import Flask, json
 from flask.logging import default_handler
 from flask_migrate import Migrate
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
+from str2bool import str2bool
 
 from config import Config
 
@@ -41,7 +41,7 @@ def create_app(config_class=Config):
     app.logger.removeHandler(default_handler)
     app.logger.addHandler(console)
     console.setLevel(int(app.config["LOG_LEVEL"]))
-    socket_log = logger if strtobool(str(app.config["SOCKET_LOG"])) == 1 else False
+    socket_log = logger if str2bool(str(app.config["SOCKET_LOG"])) == 1 else False
     db.init_app(app)
     migrate.init_app(app, db, compare_type=True, ping_interval=60)
     socketio.init_app(

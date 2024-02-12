@@ -6,7 +6,6 @@ import shutil
 import string
 import time
 from datetime import datetime
-from distutils.util import strtobool
 from platform import release
 from shutil import move
 from tempfile import mkdtemp
@@ -16,6 +15,7 @@ import requests
 from dateutil import parser
 from flask import render_template
 from magic import Magic
+from str2bool import str2bool
 
 import metatube.musicbrainz as musicbrainz
 import metatube.sponsorblock as sb
@@ -91,7 +91,7 @@ def searchitem():
 def search(query):
     if query is not None and len(query) > 1:
         if yt.is_supported(query):
-            verbose = strtobool(str(env.LOGGER))
+            verbose = str2bool(str(env.LOGGER))
             video = yt.fetch_url(query, verbose)
             if Database.checkyt(video["id"]) is None:
                 templates = Templates.fetchalltemplates()
@@ -147,7 +147,7 @@ def download(fileData):
     ffmpeg = Config.get_ffmpeg()
     hw_transcoding = Config.get_hwt()
     vaapi_device = hw_transcoding.split(";")[1] if "vaapi" in hw_transcoding else ""
-    verbose = strtobool(str(env.LOGGER))
+    verbose = str2bool(str(env.LOGGER))
     logger.info("Request to download %s", fileData["url"])
     ytdl_options = yt.get_options(
         ext,
