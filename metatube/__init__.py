@@ -53,9 +53,6 @@ def create_app(config_class=Config):
     )
     app.register_blueprint(bp_overview)
     app.register_blueprint(bp_settings)
-    if app.config.get("INIT_DB") == True:
+    if app.config.get("INIT_DB") is True:
         init_db(app)
     return app
-
-
-import metatube.database

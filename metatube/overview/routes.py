@@ -4,9 +4,7 @@ import os
 import random
 import shutil
 import string
-import time
 from datetime import datetime
-from platform import release
 from shutil import move
 from tempfile import mkdtemp
 from zipfile import ZipFile

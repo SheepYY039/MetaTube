@@ -9,4 +9,3 @@ bp = Blueprint(
     template_folder="../templates/",
     url_prefix=Config.URL_SUBPATH,
 )
-from metatube.settings import routes

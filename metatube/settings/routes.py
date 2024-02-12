@@ -1,12 +1,11 @@
 import json
 import os
 
-from flask import jsonify, render_template, request
-from flask.templating import render_template_string
+from flask import render_template
 
 from metatube import Config as env
 from metatube import socketio, sockets
-from metatube.database import *
+from metatube.database import Config, Templates
 from metatube.ffmpeg import ffmpeg
 from metatube.settings import bp
 

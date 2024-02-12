@@ -11,7 +11,6 @@ import yt_dlp
 from jinja2 import Environment, PackageLoader, select_autoescape
 from youtubesearchpython import VideosSearch
 from yt_dlp.postprocessor.ffmpeg import FFmpegPostProcessorError
-from yt_dlp.postprocessor.metadataparser import MetadataParserPP
 from yt_dlp.utils import DownloadError, ExtractorError, PostProcessingError
 
 from metatube import logger, sockets

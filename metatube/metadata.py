@@ -20,7 +20,6 @@ from mutagen.id3 import (  # Meaning of the various frames: https://mutagen.read
     TRCK,
     TSRC,
     TXXX,
-    USLT,
 )
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4, MP4Cover

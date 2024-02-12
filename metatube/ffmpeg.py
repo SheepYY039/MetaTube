@@ -1,8 +1,6 @@
 import os
 import subprocess
 
-import ffmpeg as ffmpeg_python
-
 from metatube import Config as env
 from metatube import logger
 from metatube.database import Config
