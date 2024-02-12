@@ -6,6 +6,9 @@ cli:
 # Trunk provides extensibility via plugins. (https://docs.trunk.io/plugins)
 plugins:
   sources:
+    - id: configs
+      ref: v1.0.2
+      uri: https://github.com/trunk-io/configs
     - id: trunk
       ref: v1.4.2
       uri: https://github.com/trunk-io/plugins
@@ -29,6 +32,7 @@ lint:
     - mypy@1.8.0
     - osv-scanner@1.6.2
     - oxipng@9.0.0
+    - pylint@3.0.3
     - ruff@0.2.1
     - terrascan@1.18.11
     - trivy@0.49.1
@@ -36,7 +40,6 @@ lint:
     - yamllint@1.34.0
   disabled:
     - autopep8
-    - prettier
 actions:
   disabled:
     - trunk-announce
