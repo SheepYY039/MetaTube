@@ -119,7 +119,7 @@ docker run \
 
 Docker-compose:
 
-```
+```compose
 version: '3.3'
 services:
     metatube:

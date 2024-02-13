@@ -32,7 +32,7 @@ from metatube import Config, logger, sockets
 
 class MetaData:
     @staticmethod
-    def getresponse(data):
+    def get_response(data):
         return {
             "filepath": os.path.join(Config.BASE_DIR, data["filename"]),
             "name": data["title"],
@@ -45,7 +45,7 @@ class MetaData:
         }
 
     @staticmethod
-    def getmusicbrainzdata(filename, metadata_user, metadata_source, cover_source):
+    def get_musicbrainz_data(filename, metadata_user, metadata_source, cover_source):
         logger.info("Getting Musicbrainz metadata")
         album = (
             metadata_source["release"]["release-group"]["title"]
@@ -56,8 +56,9 @@ class MetaData:
         for artist in metadata_source["release"]["artist-credit"]:
             try:
                 artist_list.append(artist["artist"]["name"])
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(str(e))
+
         artist_list = (
             artist_list
             if json.loads(metadata_user["artists"]) == [""]
@@ -65,7 +66,8 @@ class MetaData:
         )
         try:
             language = metadata_source["release"]["text-representation"]["language"]
-        except Exception:
+        except Exception as e:
+            logger.error(str(e))
             language = ""
         mbp_releaseid = (
             metadata_source["release"]["id"]
@@ -96,7 +98,7 @@ class MetaData:
             Config.BASE_DIR, "metatube/static/images/empty_cover.png"
         ):
             try:
-                response = requests.get(cover_path)
+                response: Response = requests.get(cover_path)
                 image = response.content
                 magic = Magic(mime=True)
                 cover_mime_type = magic.from_buffer(image)
@@ -143,7 +145,8 @@ class MetaData:
                     int(tracknr) - 1
                 ]["recording"]["tag-list"]:
                     genres += tag["name"] + "; "
-        except Exception:
+        except Exception as e:
+            logger.error(str(e))
             pass
         genres = genres.strip()[
             0 : len(genres.strip()) - 1
@@ -186,7 +189,7 @@ class MetaData:
         return data
 
     @staticmethod
-    def getspotifydata(filename, metadata_user, metadata_source):
+    def get_spotify_data(filename, metadata_user, metadata_source):
         logger.info("Getting Spotify metadata")
         album = (
             metadata_source["album"]["name"]
@@ -244,7 +247,7 @@ class MetaData:
         )
         if cover_path != default_cover:
             try:
-                response = requests.get(cover_path)
+                response: Response = requests.get(cover_path)
                 image = response.content
                 magic = Magic(mime=True)
                 cover_mime_type = magic.from_buffer(image)
@@ -277,7 +280,7 @@ class MetaData:
         return data
 
     @staticmethod
-    def getdeezerdata(filename, metadata_user, metadata_source):
+    def get_deezer_data(filename, metadata_user, metadata_source):
         album = (
             metadata_source["album"]["title"]
             if len(metadata_user["album"]) < 1
@@ -330,7 +333,7 @@ class MetaData:
         )
         if cover_path != default_cover:
             try:
-                response = requests.get(cover_path)
+                response: Response = requests.get(cover_path)
                 image = response.content
                 magic = Magic(mime=True)
                 cover_mime_type = magic.from_buffer(image)
@@ -363,7 +366,7 @@ class MetaData:
         return data
 
     @staticmethod
-    def getgeniusdata(filename, metadata_user, metadata_source, lyrics):
+    def get_genius_data(filename, metadata_user, metadata_source, lyrics):
         logger.info("Getting Genius metadata")
         album = (
             metadata_source["song"]["album"]["name"]
@@ -401,11 +404,11 @@ class MetaData:
             if len(metadata_user["title"]) < 1
             else metadata_user["title"]
         )
-        geniusartists = metadata_source["song"]["primary_artist"]["name"] + "; "
+        genius_artists = metadata_source["song"]["primary_artist"]["name"] + "; "
         for artist in metadata_source["song"]["featured_artists"]:
-            geniusartists += artist["name"] + "; "
+            genius_artists += artist["name"] + "; "
         artists = (
-            geniusartists[0 : len(geniusartists) - 2]
+            genius_artists[0 : len(genius_artists) - 2]
             if len(metadata_user["artists"]) < 1
             else metadata_user["artists"]
         )
@@ -446,7 +449,7 @@ class MetaData:
         return data
 
     @staticmethod
-    def onlyuserdata(filename, metadata_user):
+    def only_userdata(filename, metadata_user):
         if metadata_user["cover"] != "":
             try:
                 cover_path = metadata_user["cover"]
@@ -487,7 +490,7 @@ class MetaData:
         return data
 
     @staticmethod
-    def mergeaudiodata(data):
+    def merge_audio_data(data):
         """
         Valid fields for EasyID3:
             "album",
@@ -608,9 +611,9 @@ class MetaData:
                     base64.b64encode(cover_data).decode("ascii")
                 ]
                 audio.save()
-        response = MetaData.getresponse(data)
+        response = MetaData.get_response(data)
         if data["goal"] == "edit":
-            response["itemid"] = data["itemid"]
+            response["item_id"] = data["item_id"]
             logger.info("Finished changing metadata of %s", data["title"])
             sockets.overview({"msg": "changed_metadata", "data": response})
         elif data["goal"] == "add":
@@ -618,7 +621,7 @@ class MetaData:
             sockets.finished_metadata(response)
 
     @staticmethod
-    def mergeid3data(data):
+    def merge_id3_data(data):
         if data["extension"] == "WAV":
             audio = WAVE(data["filename"])
         else:
@@ -659,9 +662,9 @@ class MetaData:
             )
         )
 
-        response = MetaData.getresponse(data)
+        response = MetaData.get_response(data)
         if data["goal"] == "edit":
-            response["itemid"] = data["itemid"]
+            response["item_id"] = data["item_id"]
             logger.info("Finished changing metadata of %s", data["title"])
             sockets.overview({"msg": "changed_metadata", "data": response})
         elif data["goal"] == "add":
@@ -669,7 +672,7 @@ class MetaData:
             sockets.finished_metadata(response)
 
     @staticmethod
-    def mergevideodata(data):
+    def merge_video_data(data):
         if data["extension"] in ["M4A", "MP4"]:
             video = MP4(data["filename"])
         else:
@@ -698,10 +701,10 @@ class MetaData:
         video["covr"] = [MP4Cover(data["image"], imageformat)]
 
         video.save()
-        response = MetaData.getresponse(data)
+        response = MetaData.get_response(data)
 
         if data["goal"] == "edit":
-            response["itemid"] = data["itemid"]
+            response["item_id"] = data["item_id"]
             logger.info("Finished changing metadata of %s", data["title"])
             sockets.overview({"msg": "changed_metadata", "data": response})
         elif data["goal"] == "add":
@@ -709,7 +712,7 @@ class MetaData:
             sockets.finished_metadata(response)
 
     @staticmethod
-    def readaudiometadata(filename):
+    def read_audio_metadata(filename):
         logger.info("Reading metadata of %s", filename)
         extension = filename.split(".")[len(filename.split(".")) - 1].upper()
         if extension == "MP3":
@@ -728,7 +731,8 @@ class MetaData:
             audio = OggVorbis(filename)
             data = OggVorbis(filename)
         else:
-            return
+            logger.error("File type not supported")
+            # return
 
         response = {
             "title": audio.get("title", [""])[0],
@@ -755,7 +759,7 @@ class MetaData:
         return response
 
     @staticmethod
-    def readvideometadata(filename):
+    def read_video_metadata(filename):
         extension = filename.split(".")[len(filename.split(".")) - 1].upper()
         if extension in ["M4A", "MP4"]:
             video = MP4(filename)

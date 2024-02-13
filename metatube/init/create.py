@@ -8,7 +8,7 @@ from flask_migrate import init, migrate, stamp, upgrade
 from metatube import Config as env
 from metatube import db, logger
 from metatube import migrate as metatube_migrate
-from metatube.database import *
+from metatube.database import Config, Templates
 from metatube.ffmpeg import ffmpeg
 
 
@@ -27,7 +27,7 @@ class Default:
             ffmpeg_instance = ffmpeg()
             ffmpeg_instance.test()
             return True
-        config = Config(
+        default_config = Config(
             ffmpeg_directory=self._ffmpeg,
             amount=5,
             hardware_transcoding="None",
@@ -38,7 +38,7 @@ class Default:
             auth_username="",
             auth_password="",
         )  # type: ignore
-        db.session.add(config)
+        db.session.add(default_config)
         db.session.commit()
         logger.info("Created default rows for the configuration table")
         ffmpeg_instance = ffmpeg()
@@ -48,13 +48,13 @@ class Default:
     def templates(self):
         if Templates.query.count() > 0:
             return True
-        template = Templates(
+        default_template = Templates(
             id=0,
             name="Default",
             type="Audio",
             extension="mp3",
             output_folder=self._downloads,
-            output_name=f"%(title)s.%(ext)s",
+            output_name="%(title)s.%(ext)s",
             bitrate="best",
             resolution="best;best",
             default=True,
@@ -64,7 +64,7 @@ class Default:
             proxy_address="",
             proxy_port="",
         )  # type: ignore
-        db.session.add(template)
+        db.session.add(default_template)
         db.session.commit()
         logger.info("Created default rows for the Templates table")
         return True
@@ -87,10 +87,10 @@ class Default:
         stamp(directory)
         migrate(directory)
         if os.path.exists(self._url) and os.path.isfile(self._url):
-            self.removealembic()
+            self.remove_alembic()
         upgrade(directory)
 
-    def removealembic(self):
+    def remove_alembic(self):
         conn = sqlite3.connect(self._url.replace("sqlite:///", ""))
         conn.execute("DROP TABLE IF EXISTS alembic_version;")
         conn.commit()
@@ -108,5 +108,6 @@ class Default:
             with open(config.config_file_name, "w") as file:
                 parser.write(file)
         except Exception as e:
-            pass
+            logger.error("Error configuring alembic: %s", e)
+
         return config

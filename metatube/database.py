@@ -50,7 +50,7 @@ class Config(db.Model):
         db.session.commit()
         logger.info("Changed the metadata settings")
 
-    def set_hwtranscoding(self, hw_transcoding):
+    def set_hw_transcoding(self, hw_transcoding):
         self.hardware_transcoding = hw_transcoding
         db.session.commit()
         logger.info("Set hardware transcoding to %s", hw_transcoding)
@@ -94,7 +94,7 @@ class Templates(db.Model):
         return True if Templates.query.filter_by(name=value).count() > 0 else False
 
     @staticmethod
-    def counttemplates():
+    def count_templates():
         return Templates.query.count()
 
     @staticmethod
@@ -120,11 +120,11 @@ class Templates(db.Model):
         return row.id
 
     @staticmethod
-    def fetchtemplate(input_id):
+    def fetch_template(input_id):
         return Templates.query.filter_by(id=input_id).first()
 
     @staticmethod
-    def fetchalltemplates():
+    def fetch_all_templates():
         return Templates.query.all()
 
     def delete(self):
@@ -133,18 +133,18 @@ class Templates(db.Model):
         db.session.commit()
 
     @staticmethod
-    def searchdefault():
+    def search_default():
         return Templates.query.filter_by(default=True).first()
 
-    def setdefault(self, defaulttemplate=None):
+    def set_default(self, default_template=None):
         self.default = True
-        if defaulttemplate is not None:
-            defaulttemplate.default = False
+        if default_template is not None:
+            default_template.default = False
         db.session.commit()
         msg = f"Set template '{self.name}' as default template"
         logger.info(msg)
-        sockets.templatesettings(
-            {"status": "setdefault", "msg": msg, "templateid": self.id}
+        sockets.template_settings(
+            {"status": "set_default", "msg": msg, "template_id": self.id}
         )
 
     def edit(self, data):
@@ -178,34 +178,34 @@ class Database(db.Model):
     youtube_id = db.Column(db.String(16), unique=True)
 
     @staticmethod
-    def searchrecords(query):
+    def search_records(query):
         return Database.query.filter(Database.name.like(query + "%")).all()
 
     @staticmethod
-    def itemtodict(item):
-        dict = {}
+    def item_to_dict(item):
+        data_dict = {}
         for column in item.__table__.columns:
-            dict[column.name] = str(getattr(item, column.name))
-        return dict
+            data_dict[column.name] = str(getattr(item, column.name))
+        return data_dict
 
     @staticmethod
-    def getrecords():
+    def get_records():
         return Database.query.all()
 
     @staticmethod
-    def fetchitem(input_id):
+    def fetch_item(input_id):
         return Database.query.filter_by(id=input_id).first()
 
     @staticmethod
-    def checkfile(filepath_input):
+    def check_file(filepath_input):
         return Database.query.filter_by(filepath=filepath_input).first()
 
     @staticmethod
-    def checkyt(youtube_id_input):
+    def check_yt(youtube_id_input):
         return Database.query.filter_by(youtube_id=youtube_id_input).first()
 
     @staticmethod
-    def checktrackid(release_id_input):
+    def check_trackid(release_id_input):
         return Database.query.filter_by(audio_id=release_id_input).first()
 
     @staticmethod
@@ -240,7 +240,7 @@ class Database(db.Model):
         data["date"] = data["date"].strftime("%d-%m-%Y")
         sockets.overview({"msg": "changed_metadata_db", "data": data})
 
-    def updatefilepath(self, filepath):
+    def update_filepath(self, filepath):
         self.filepath = filepath
         db.session.commit()
         logger.info("Updated filepath of item %s to %s", self.name, filepath)

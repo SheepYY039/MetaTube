@@ -6,10 +6,10 @@ from metatube import socketio
 from metatube.database import Templates
 
 
-@socketio.on("fetchtemplate")
-def fetchtemplate(id):
-    if id is not None and len(id) > 0:
-        template = Templates.fetchtemplate(id)
+@socketio.on("fetch_template")
+def fetch_template(_id):
+    if _id is not None and len(_id) > 0:
+        template = Templates.fetch_template(_id)
         data = {
             "id": template.id,
             "name": template.name,

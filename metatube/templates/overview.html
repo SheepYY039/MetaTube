@@ -1,0 +1,404 @@
+<!-- @format -->
+{% extends 'base.html' %}
+{% block content %}
+    <script src="{{ url_for('static', filename='JS/libraries/APlayer.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='JS/overview.js') }}"></script>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='CSS/libraries/APlayer.min.css') }}" />
+    <div class="container">
+        <div class="input-group">
+            <input type="text"
+                   class="form-control"
+                   id="search_item"
+                   placeholder="Search for downloaded video..."
+                   aria-label="Downloaded video name"
+                   autocomplete="off" />
+            <div class="input-group-append">
+                <button type="button"
+                        id="add_video"
+                        class="btn btn-success input-group-text bg-success"
+                        data-toggle="tooltip"
+                        data-placement="top"
+                        title="Download an item">
+                    <i class="bi bi-plus-lg" aria-label="Add item"></i>
+                </button>
+                <button class="navbar-toggler d-block d-lg-none"
+                        type="button"
+                        data-toggle="collapse"
+                        data-target="#navbar"
+                        aria-controls="navbar"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation">
+                    <i class="bi bi-list" aria-label="Toggle navigation"></i>
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <p class="text-center" id="overview_log"></p>
+            </div>
+        </div>
+        <div class="row" style="visibility: hidden" id="bulk_actions_row">
+            <div class="col">
+                <div class="btn-group float-right">
+                    <button type="button" class="btn btn-success" id="download_items">Download selected items</button>
+                    <button type="button" class="btn btn-danger" id="delete_items">Delete selected items</button>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive-md" style="height: 75vh; overflow-y: auto">
+            <table class="table table-hover table-bordered" id="record_stable">
+                <thead>
+                    <tr>
+                        <th scope="col" class="text-dark">Name</th>
+                        <th scope="col" class="text-dark">Artist</th>
+                        <th scope="col" class="text-dark">Album</th>
+                        <th scope="col" class="text-dark">Date</th>
+                        <th scope="col" class="text-dark">Extension</th>
+                        <th scope="col"
+                            style="vertical-align: middle"
+                            class="text-dark align-middle">
+                            <span>Actions</span>
+                            <input class="float-right mr-2 align-middle" type="checkbox" id="select_all" />
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <noscript>
+                        <tr>
+                            <td colspan="6" class="text-dark text-center">
+                                <h5>MetaTube will NOT work if you disable JavaScript</h5>
+                            </td>
+                        </tr>
+                    </noscript>
+                    {% if records|length > 0 %}
+                        {% for record in records %}
+                            <tr id="{{ record.id }}">
+                                <td class="td_name text-dark" style="min-width: 120px">
+                                    <div class="row justify-content-center">
+                                        <div class="col d-flex justify-content-center">
+                                            <img class="img-fluid cover_img"
+                                                 style="width: 100px;
+                                                        height: 100px"
+                                                 src="{{ record.cover }}" />
+                                        </div>
+                                        <div class="col align-self-center" style="margin: 0 10px 0 10px">
+                                            <span class="align-middle">{{ record.name }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="td_artist text-dark" style="vertical-align: middle">{{ record.artist.replace('/', ';') }}</td>
+                                <td class="td_album text-dark" style="vertical-align: middle">{{ record.album }}</td>
+                                <td class="td_date text-dark" style="vertical-align: middle">{{ record.date.strftime("%d-%m-%Y") }}</td>
+                                <td class="td_ext text-dark" style="vertical-align: middle">{{ get_ext(record.filepath) }}</td>
+                                <td style="vertical-align: middle" colspan="2">
+                                    <div class="d-flex justify-content-end">
+                                        <div class="dropdown">
+                                            <button class="btn btn-primary dropdown-toggle"
+                                                    type="button"
+                                                    data-toggle="dropdown"
+                                                    aria-expanded="false">Select action</button>
+                                            <div class="dropdown-menu">
+                                                {% if path_exists(record.filepath) %}
+                                                    <a href="javascript:void(0)"
+                                                       class="dropdown-item d-none d-md-block edit_file_btn">Change file_data</a>
+                                                    <a href="javascript:void(0)"
+                                                       class="dropdown-item d-none d-md-block edit_metadata_btn">
+                                                        {% if check_metadata(record.filepath) %}
+                                                            Change metadata
+                                                        {% else %}
+                                                            Metadata is
+                                                            not supported
+                                                        {% endif %}
+                                                    </a>
+                                                    <a href="javascript:void(0)" class="dropdown-item download_item_btn">Download item</a>
+                                                    <a href="javascript:void(0)" class="dropdown-item play_item_btn">Play item</a>
+                                                    <a href="javascript:void(0)"
+                                                       class="dropdown-item d-none d-md-block move_item_btn">Move item's file location</a>
+                                                {% else %}
+                                                    <a href="javascript:void(0)"
+                                                       class="dropdown-item d-none d-md-block find_item_btn">Select new item location (item has been moved or deleted)</a>
+                                                {% endif %}
+                                                <a href="https://youtu.be/{{ record.youtube_id }}"
+                                                   target="_blank"
+                                                   class="dropdown-item">View YouTube video</a>
+                                                <a href="javascript:void(0)" class="dropdown-item delete_item_btn">Delete item</a>
+                                            </div>
+                                        </div>
+                                        <div class="form-check ml-2">
+                                            <input type="checkbox" class="form-check-input select_item" />
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr id="empty_row">
+                            <td colspan="6" class="text-dark text-center" style="border: 0px">
+                                <h5>
+                                    No items have been downloaded yet! Click on the plus next to the search field to add
+                                    an item!
+                                </h5>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        <div id="audio_player" class="d-none"></div>
+    </div>
+    <div class="modal fade"
+         tabindex="-1"
+         role="dialog"
+         id="download_modal"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg mw-100 w-75">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Download song</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        {% if ffmpeg_path is sameas True %}
+                            <div class="row">
+                                <form id="query_form" class="form-group" style="width: 100%">
+                                    <p>Only YouTube URLs are currently supported</p>
+                                    <div class="input-group mb-3">
+                                        <input type="text"
+                                               class="form-control"
+                                               id="query"
+                                               placeholder="Enter URL or a name of a YouTube video"
+                                               aria-describedby="basic-addon2"
+                                               autocomplete="off"
+                                               aria-autocomplete="Query to what to search for" />
+                                        <div class="input-group-append">
+                                            <button type="button" id="search_song_btn" class="btn btn-success">
+                                                <i class="bi bi-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p class="text-center" id="search_log"></p>
+                                </form>
+                            </div>
+                            <div id="search_metadata_view" class="d-none">
+                                <p class="d-none" id="404p">
+                                    No matching items found from selected metadata providers :(
+                                    <br />
+                                    Enter metadata manually here to search the metadata providers or enter metadata
+                                    manually
+                                </p>
+                                <p id="otherp">
+                                    In case the desired item wasn't found, enter an alternative metadata search query
+                                    here:
+                                </p>
+                                <form id="metadata_query_form">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="metadata_query" />
+                                        <div class="input-group-append">
+                                            <button type="button" id="search_metadata_btn" class="btn btn-success">
+                                                <i class="bi bi-search" aria-label="Search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div id="default_view" class="row d-flex"></div>
+                            <div id="metadata_view" class="d-none"></div>
+                            <div id="progress_view" class="d-none">
+                                <div class="form-row">
+                                    <div class="col">
+                                        <p id="progress_text" class="text-center"></p>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="col">
+                                        <div class="progress" id="progress_download">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                                 id="progress"
+                                                 role="progressbar"
+                                                 aria-valuenow=""
+                                                 aria-valuemin="0"
+                                                 aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="row">
+                                <h3 class="text-center">Select an FFmpeg location in settings before downloading any songs!</h3>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer d-none" id="search_video_modal_footer">
+                    <button type="button" class="btn btn-success d-none" id="next_btn">Next</button>
+                    <button type="button" class="btn btn-warning d-none" id="reset_view_btn">Return to video overview</button>
+                    <button type="button" class="btn btn-primary d-none" id="edit_metadata">Edit metadata manually</button>
+                    <button type="button" class="btn btn-primary d-none" id="download_file_btn">Download file</button>
+                    <button type="button" class="btn btn-warning d-none" id="metadata_view_btn">Return to metadata source</button>
+                    {% if genius is sameas True %}
+                        <button type="button" class="btn btn-warning d-none" id="genius_btn">Choose lyrics</button>
+                    {% endif %}
+                    <button type="button" class="btn btn-success d-none" id="download_btn">Download</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade"
+         id="remove_item_modal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="remove item modal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="remove_item_modal_title"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="del_item_btn_modal">Delete item</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade"
+         id="edit_item_modal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="Edit item modal"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg mw-100 w-75" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="edit_item_modal_title"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="download_section"></div>
+                    <div id="metadata_section"></div>
+                    <div id="progress_section" class="d-none">
+                        <div class="form-row">
+                            <div class="col">
+                                <p id="progress_text_edit" class="text-center"></p>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col">
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                         id="progress_edit"
+                                         role="progressbar"
+                                         aria-valuenow=""
+                                         aria-valuemin="0"
+                                         aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="edit_file_btn_modal">Save item</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Filebrowser Modal -->
+    <div class="modal fade"
+         id="file_browser_modal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="file_browser_modal_label"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg mw-100 w-75" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="browser_modal_title"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <span id="file_browser_log" class="text-center text-dark"></span>
+                    <h6 id="file_browser_title">
+                        Browsing <span></span>
+                    </h6>
+                    <div class="table-responsive-md">
+                        <table class="table table-hover" id="file_browser_table">
+                            <thead>
+                                <tr>
+                                    <th class="text-dark" scope="col">Filename</th>
+                                    <th class="text-dark" scope="col">File size</th>
+                                    <th class="text-dark" scope="col">
+                                        <span class="text-left">Last modified</span>
+                                        <a href="javascript:void(0)"
+                                           class="text-dark add_folder"
+                                           style="text-decoration: none;
+                                                  float: right"><i class="bi bi-folder-plus"></i></a>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr id="file_browser_up">
+                                    <td colspan="3" class="text-dark" scope="row">...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <a href="#invisible_files_explanation"
+                       data-toggle="collapse"
+                       role="button">Why are some files invisible?</a>
+                    <div class="collapse" id="invisible_files_explanation">
+                        <div class="card card-body text-dark">
+                            Only files with the following supported extensions are shown: AAC, FLAC, MP3, M4A, OPUS,
+                            VORBIS, WAV, MP4, M4A, FLV, WEBM, OGG, MKV & AVI.
+                            <br />
+                            Additionally, files that are already linked with an item in the database, will be hidden
+                            as well, to prevent a file being linked to multiple items.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <form class="form-inline d-none justify-content-end"
+                          id="filename_form"
+                          style="width: 80%">
+                        <label class="sr-only" for="filename">Filename excluding extension</label>
+                        <input type="text"
+                               class="form-control w-50 mr-2"
+                               placeholder="Filename excluding extension"
+                               id="filename" />
+                        <button type="submit"
+                                class="btn btn-primary d-none disabled"
+                                id="submit_filename"
+                                disabled>Submit filename</button>
+                        <input type="checkbox" class="form-check-input ml-2" id="overwrite_check" />
+                        <label class="form-check-label" for="overwrite_check">Overwrite existing files</label>
+                    </form>
+                    <button class="btn btn-primary d-none" id="select_directory_btn">Select current directory</button>
+                    <p id="selected_file"></p>
+                    <button type="button"
+                            class="btn btn-primary d-none disabled"
+                            id="select_file_btn"
+                            disabled>Select</button>
+                    <button type="button"
+                            class="btn btn-secondary"
+                            id="close_file_browser_btn"
+                            style="max-width: 10%">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

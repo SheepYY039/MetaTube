@@ -1,4 +1,4 @@
-from lyricsgenius import Genius as geniusobj
+from lyricsgenius import Genius as genius_obj
 
 from metatube import logger, sockets
 
@@ -6,24 +6,25 @@ from metatube import logger, sockets
 class Genius:
     def __init__(self, client_id):
         try:
-            self.genius = geniusobj(client_id)
-        except TypeError() as e:
+            self.genius = genius_obj(client_id)
+        except TypeError as e:
             logger.error("Genius API failed: %s", str(e))
 
     def search(self, data):
         search = self.genius.search_songs(data["title"], data["max"])
-        sockets.geniussearch(search)
+        sockets.genius_search(search)
         logger.info("Searched Genius for track '%s' ", data["title"])
 
-    def searchsong(data, token):
+    @staticmethod
+    def search_song(data, token):
         genius = Genius(token)
         genius.search(data)
 
-    def fetchsong(self, id):
-        return self.genius.song(id)
+    def fetch_song(self, _id):
+        return self.genius.song(_id)
 
-    def fetchlyrics(self, url):
+    def fetch_lyrics(self, url):
         return self.genius.lyrics(url)
 
-    def fetchalbum(self, id):
-        sockets.foundgeniusalbum(self.genius.album_tracks(id))
+    def fetch_album(self, _id):
+        sockets.found_genius_album(self.genius.album_tracks(_id))

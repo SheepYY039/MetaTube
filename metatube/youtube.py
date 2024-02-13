@@ -5,6 +5,7 @@ from functools import partial
 from queue import Empty, LifoQueue
 from threading import Thread
 from time import sleep
+from typing import List
 from urllib.error import URLError
 
 import yt_dlp
@@ -14,7 +15,7 @@ from yt_dlp.postprocessor.ffmpeg import FFmpegPostProcessorError
 from yt_dlp.utils import DownloadError, ExtractorError, PostProcessingError
 
 from metatube import logger, sockets
-from metatube.sponsorblock import segments as findsegments
+from metatube.sponsorblock import segments as find_segments
 
 
 class YouTube:
@@ -40,7 +41,7 @@ class YouTube:
             raise ValueError("Invalid URL!")
 
     @staticmethod
-    def verifytemplate(template, info_dict, verbose):
+    def verify_template(template, info_dict, verbose):
         ytdl_options = {"logger": logger, "verbose": verbose}
         with yt_dlp.YoutubeDL(ytdl_options) as ytdl:
             try:
@@ -54,7 +55,7 @@ class YouTube:
         logger.info("Searching YouTube for '%s'", query)
         search = VideosSearch(query)
         result = search.result()
-        sockets.youtubesearch(result)
+        sockets.youtube_search(result)
 
     @staticmethod
     async def download(url: list, queue: LifoQueue, ytdl_options: dict):
@@ -66,7 +67,7 @@ class YouTube:
                 return ytdl.download(url)
             except KeyError as e:
                 logger.error("%s key did not exist", str(e))
-                sockets.downloaderrors(
+                sockets.download_errors(
                     {
                         "status": "error",
                         "message": "The output template was incorrect. Check logs for more info.",
@@ -75,52 +76,52 @@ class YouTube:
                 return None
             except ExtractorError as e:
                 logger.error("Extractor error: %s", str(e))
-                sockets.downloaderrors(
+                sockets.download_errors(
                     {
                         "status": "error",
-                        "message": "An extractor error has occured. Check logs for more info.",
+                        "message": "An extractor error has occurred. Check logs for more info.",
                     }
                 )
                 return None
             except FFmpegPostProcessorError as e:
-                logger.error("FFmpegPostProcessor error: %s", str(e))
-                sockets.downloaderrors(
+                logger.error("FFmpegpostprocessor error: %s", str(e))
+                sockets.download_errors(
                     {
                         "status": "error",
-                        "message": "An processing error involving FFmpeg has occured. Check logs for more info.",
+                        "message": "An processing error involving FFmpeg has occurred. Check logs for more info.",
                     }
                 )
                 return None
             except PostProcessingError as e:
-                logger.error("Postprocessor error: %s", str(e))
-                sockets.downloaderrors(
+                logger.error("postprocessor error: %s", str(e))
+                sockets.download_errors(
                     {
                         "status": "error",
-                        "message": "A processing error has occured. Check logs for more info.",
+                        "message": "A processing error has occurred. Check logs for more info.",
                     }
                 )
                 return None
             except DownloadError as e:
                 logger.error("Downloading error: %s", str(e))
-                sockets.downloaderrors(
+                sockets.download_errors(
                     {
                         "status": "error",
-                        "message": "A downloading error has occured. Check logs for more info.",
+                        "message": "A downloading error has occurred. Check logs for more info.",
                     }
                 )
                 return None
             except URLError as e:
                 logger.error("Network connection error: %s", str(e))
-                sockets.downloaderrors(
+                sockets.download_errors(
                     {
                         "status": "error",
-                        "message": "A network error occured. Check logs for more info.",
+                        "message": "A network error occurred. Check logs for more info.",
                     }
                 )
                 return None
             except Exception as e:
                 logger.exception("Error during downloading video: %s", str(e))
-                sockets.downloaderrors(
+                sockets.download_errors(
                     {
                         "status": "error",
                         "message": "Something has gone wrong. Check logs for more info",
@@ -148,7 +149,7 @@ class YouTube:
         type,
         output_format,
         bitrate,
-        skipfragments,
+        skip_fragments,
         proxy_data,
         ffmpeg,
         hw_transcoding,
@@ -159,7 +160,7 @@ class YouTube:
     ):
         proxy = json.loads(proxy_data)
         filepath = os.path.join(output_folder, output_format)
-        segments = json.loads(skipfragments)
+        segments = json.loads(skip_fragments)
         postprocessors = []
         postprocessor_args = {}
         proxy_string = ""
@@ -172,7 +173,7 @@ class YouTube:
         Video:
         Exactly the same for videos
         """
-        format = (
+        dl_format = (
             f"ba[ext={ext}]/ba"
             if type == "Audio"
             else f"b[ext={ext}]/ba+bv[ext={ext}]/b/ba+bv"
@@ -227,7 +228,7 @@ class YouTube:
             ranges = []
             for segment in segments:
                 if len(segment["start"]) < 1 or len(segment["end"]) < 1:
-                    sockets.searchvideo("Enter all fragment fields!")
+                    sockets.search_video("Enter all fragment fields!")
                     return False
                 else:
                     ranges.append((int(segment["start"]), int(segment["end"])))
@@ -249,7 +250,7 @@ class YouTube:
         # })
 
         ytdl_options = {
-            "format": format,
+            "format": dl_format,
             "merge_output_format": ext,
             "postprocessors": postprocessors,
             "postprocessor_args": postprocessor_args,
@@ -300,7 +301,7 @@ class YouTube:
                         total_bytes = (
                             d["total_bytes_estimate"] or d["total_bytes"] or "Unknown"
                         )
-                        sockets.downloadprogress(downloaded_bytes, total_bytes)
+                        sockets.download_progress(downloaded_bytes, total_bytes)
                 elif d["status"] == "processing":
                     sockets.postprocessing(d["postprocessor"])
                 elif d["status"] == "finished":
@@ -316,16 +317,18 @@ class YouTube:
         loop.run_until_complete(future)
 
     @staticmethod
-    def fetch_video(video, templates, metadata_sources, defaulttemplate):
-        sb = findsegments(video["webpage_url"])
-        segments = sb if type(sb) == list else "error"
+    def fetch_video(video, templates, metadata_sources, default_template) -> None:
+        # sb = find_segments(video["webpage_url"])
+        segments: List[Segments] = find_segments(video["webpage_url"])
+        # segments = sb if isinstance(sb, list) else "error"
+
         env = Environment(
             loader=PackageLoader("metatube"), autoescape=select_autoescape()
         )
-        downloadtemplate = env.get_template("downloadform.html")
-        metadatatemplate = env.get_template("metadataform.html")
-        downloadform = downloadtemplate.render(
-            templates=templates, segments=segments, default=defaulttemplate
+        download_template = env.get_template("download_form.html")
+        metadata_template = env.get_template("metadata_form.html")
+        download_form = download_template.render(
+            templates=templates, segments=segments, default=default_template
         )
-        metadataform = metadatatemplate.render(metadata_sources=metadata_sources)
-        sockets.youtuberesults(video, downloadform, metadataform)
+        metadata_form = metadata_template.render(metadata_sources=metadata_sources)
+        sockets.youtube_results(video, download_form, metadata_form)

@@ -1,0 +1,449 @@
+{% extends 'base.html' %}
+{% block content %}
+    <script src="{{ url_for('static', filename='JS/settings.js') }}"></script>
+    <div class="container-fluid">
+        <nav>
+            <ul class="nav nav-tabs justify-content-center" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#download_tab" data-toggle="tab">Download settings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#templates_tab" data-toggle="tab">Template settings</a>
+                </li>
+                <button class="navbar-toggler d-block d-lg-none"
+                        type="button"
+                        data-toggle="collapse"
+                        data-target="#navbar"
+                        aria-controls="navbar"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation">
+                    <i class="bi bi-list"></i>
+                </button>
+            </ul>
+        </nav>
+        <div class="tab-content">
+            <div class="tab-pane active" id="download_tab">
+                <h4 class="text-center">Download settings</h4>
+                <div class="form-row" id="download_settings_log">
+                    <div class="col">
+                        <p class="text-center"></p>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col">
+                        <label for="#ffmpeg_path">
+                            An absolute path* or relative path from the root directory** to the folder containing ffmpeg. Required to download videos.
+                        </label>
+                        <input type="text"
+                               id="ffmpeg_path"
+                               value="{{ ffmpeg }}"
+                               class="form-control">
+                    </div>
+                    <div class="col">
+                        <label for="#max_amount">
+                            Max amount of items to load when searching metadata. Default value is 5. Max amount is 100
+                        </label>
+                        <input type="text" class="form-control" value="{{ amount }}" id="max_amount" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col">
+                        <input type="hidden" value="{{ hw_transcoding }}" id="current_hw" />
+                        <label for="#hardware_acceleration">
+                            Whether to use hardware acceleration with FFmpeg; if yes, select the desired method.
+                        </label>
+                        <select class="custom-select" id="hardware_acceleration">
+                            <option value="None">None</option>
+                            <option value="amd">AMD AMF</option>
+                            <option value="qsv">Intel Quick Sync</option>
+                            <option value="omx">OpenMAX OMX</option>
+                            <option value="nvenc">NVIDIA NVENC</option>
+                            <option value="vaapi">Video Acceleration API (VAAPI)</option>
+                            <option value="videotoolbox">Video Toolbox</option>
+                        </select>
+                    </div>
+                    <div class="col d-none">
+                        <label for="#vaapi_device">Enter path to VAAPI device</label>
+                        <input type="text" id="vaapi_device" class="form-control" />
+                    </div>
+                    <div class="col d-none">
+                        <label for="#hardware_acceleration">The render node to use for hardware acceleration</label>
+                        <input type="text" class="form-control" id="hw_render_node" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label class="col-form-label">Select sources to get metadata from</label>
+                    <div class="col">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox"
+                                   class="custom-control-input metadata_input"
+                                   value="musicbrainz"
+                                   id="musicbrainz_check"
+                                   {% if 'musicbrainz' in metadata_sources %}checked{% endif %} />
+                            <label class="custom-control-label" for="#musicbrainz_check">Musicbrainz</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox"
+                                   class="custom-control-input metadata_input"
+                                   value="spotify"
+                                   id="spotify_check"
+                                   {% if 'spotify' in metadata_sources %}checked{% endif %} />
+                            <label class="custom-control-label" for="#spotify_check">Spotify</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox"
+                                   class="custom-control-input metadata_input"
+                                   value="deezer"
+                                   id="deezer_check"
+                                   {% if 'deezer' in metadata_sources %}checked{% endif %} />
+                            <label class="custom-control-label" for="#deezer_check">Deezer</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox"
+                                   class="custom-control-input metadata_input"
+                                   value="genius"
+                                   id="genius_check"
+                                   {% if 'genius' in metadata_sources %}checked{% endif %} />
+                            <label class="custom-control-label" for="#genius_check">Genius (for lyrics only)</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row d-none" id="spotify_row">
+                    <p class="mt-3">
+                        You can register get Spotify API credentials for <i>free</i> <a href="https://developer.spotify.com/dashboard/applications"
+    target="_blank">here</a>
+                    </p>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Spotify client ID</span>
+                        </div>
+                        <input type="text"
+                               class="form-control"
+                               value="{{ spotify[1] }}"
+                               id="spotify_client_id" />
+                    </div>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Spotify client Secret</span>
+                        </div>
+                        <input type="password"
+                               class="form-control"
+                               value="{{ spotify[0] }}"
+                               id="spotify_client_secret" />
+                        <div class="input-group-append">
+                            <span class="input-group-text toggle_secret" style="cursor: pointer"><i class="bi bi-eye-slash-fill"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row d-none" id="genius_row">
+                    <p class="mt-3">
+                        You can get Genius API credentials <a href="https://genius.com/api-clients" target="_blank">here</a>
+                        <br />
+                        You don't have to enter a redirect URI, as you only need the access token. After creating the client, you can go back to the overview and click on 'Generate access token'
+                        <br />
+                        If you're wondering why you should choose Genius over the other sources: Only Genius can fetch lyrics and embed lyrics in the audio files, while the others can't
+                    </p>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Genius access token</span>
+                        </div>
+                        <input type="text"
+                               class="form-control"
+                               value="{{ genius }}"
+                               id="genius_access_token" />
+                    </div>
+                </div>
+                <p>
+                    * An absolute path starts with <code>/</code> or <code>drive_letter:\</code>
+                    <br />
+                    ** The root directory is the same directory where <code>main.py</code> is located
+                </p>
+                <button type="button" class="btn btn-success" id="submitdownloadsettingsform">Update settings</button>
+            </div>
+            <div class="tab-pane" id="templates_tab">
+                <h4 class="text-center">Template settings</h4>
+                <p class="text-center" id="templates_log"></p>
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                <th class="text-dark" scope="col">Template name</th>
+                                <th class="text-dark" scope="col">Template type</th>
+                                <th class="text-dark" scope="col">Template extension</th>
+                                <th class="text-dark" scope="col">Template name format</th>
+                                <th class="text-dark" scope="col">Template output folder</th>
+                                <th class="text-dark" scope="col">Edit template</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for template in templates %}
+                                <tr id="{{ template.id }}">
+                                    <td class="text-dark td_name">{{ template.name }}</td>
+                                    <td class="text-dark td_type">{{ template.type }}</td>
+                                    <td class="text-dark td_extension">
+                                        {{ template.extension | replace('m4a_audio', 'm4a') | replace('m4a_video', 'm4a') | upper }}
+                                    </td>
+                                    <td class="text-dark td_output_name">{{ template.output_name }}</td>
+                                    <td class="text-dark td_output_folder">{{ template.output_folder }}</td>
+                                    <td>
+                                        {% if template.default is sameas True %}
+                                            <button type="button"
+                                                    data-toggle="tooltip"
+                                                    data-placement="top"
+                                                    title="Template is already the default template"
+                                                    class="btn btn-info disabled defaulttemplate"
+                                                    disabled>
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        {% else %}
+                                            <button type="button"
+                                                    data-toggle="tooltip"
+                                                    data-placement="top"
+                                                    title="Set as default template"
+                                                    class="btn btn-info setdefaulttemplate">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        {% endif %}
+                                        <button type="button"
+                                                data-toggle="tooltip"
+                                                data-placement="top"
+                                                title="Edit template"
+                                                class="btn btn-success changetemplatebtn">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <button type="button"
+                                                data-toggle="tooltip"
+                                                data-placement="top"
+                                                title="Delete template"
+                                                class="btn btn-danger deltemplatebtn">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                        <button type="button"
+                                                data-toggle="tooltip"
+                                                data-placement="top"
+                                                title="Show more info"
+                                                class="btn btn-primary expandtemplatebtn">
+                                            <i class="bi bi-caret-down-fill"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr id="hidden_{{ template.id }}" class="d-none">
+                                    <td class="text-dark" colspan="7">
+                                        <p>
+                                            Bitrate: {{ template.bitrate }}
+                                            <br />
+                                            {% if template.type == 'Video' %}
+                                                {% set resolution = template.resolution.split(';') %}
+                                                Width: {{ resolution[0] }}
+                                                <br />
+                                                Height: {{ resolution[1] }}
+                                                <br />
+                                            {% endif %}
+                                            Proxy status: {{ template.proxy_status }}
+                                            <br />
+                                            {% if template.proxy_status == 1 %}
+                                                Proxy type: {{ template.proxy_type }}
+                                                <br />
+                                                Proxy address: {{ template.proxy_address }}
+                                                <br />
+                                                Proxy port: {{ template.proxy_port }}
+                                                <br />
+                                                Proxy username: {{ template.proxy_username if template.proxy_username|length > 0 else 'None' }}
+                                                <br />
+                                                Proxy password: {{ template.proxy_password if template.proxy_password|length > 0 else 'None' }}
+                                            {% endif %}
+                                        </p>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            <tr id="add_template_row">
+                                <td colspan="7" class="text-center">
+                                    <button type="button"
+                                            data-toggle="tooltip"
+                                            data-placement="top"
+                                            title="Add template"
+                                            class="btn btn-success"
+                                            id="addtemplatemodalbtn">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade"
+         id="remove_template_modal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="remove template modal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="remove_template_modal_title"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">Are you sure you want to delete this Template?</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="del_template_btn_modal">Delete template</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade"
+         tabindex="-1"
+         role="dialog"
+         id="templates_modal"
+         aria-labelledby="template modal"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg mw-100 w-75">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add template</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="add_template_form">
+                        <div class="form-row">
+                            <div class="col">
+                                <p class="text-center" id="template_modal_log"></p>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col">
+                                <label for="#template_name">Name of the template</label>
+                                <input type="text" id="template_name" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col">
+                                <label for="#template_folder">Output folder* of the template</label>
+                                <input type="text" id="template_folder" class="form-control" />
+                            </div>
+                            <div class="col">
+                                <label for="#template_outputname">Output name format**</label>
+                                <input type="text" class="form-control" id="template_outputname" />
+                            </div>
+                            <div class="col">
+                                <label for="#template_type">Output type of the template</label>
+                                <select class="custom-select" id="template_type">
+                                    <optgroup label="Audio">
+                                        <option value="aac">AAC (Metadata not supported)</option>
+                                        <option value="flac">FLAC</option>
+                                        <option value="mp3">MP3</option>
+                                        <option value="m4a_audio">M4A</option>
+                                        <option value="opus">Opus</option>
+                                        <option value="vorbis">OGG (With Vorbis codec)</option>
+                                        <option value="wav">WAV</option>
+                                    </optgroup>
+                                    <optgroup label="Video">
+                                        <option value="mp4">MP4</option>
+                                        <option value="m4a_video">M4A</option>
+                                        <option value="flv">Flash Video (FLV & Metadata not supported)</option>
+                                        <option value="webm">WebM (Metadata not supported)</option>
+                                        <option value="ogg">Ogg</option>
+                                        <option value="mkv">Matroska (MKV & Metadata not supported)</option>
+                                        <option value="avi">AVI (Metadata not supported)</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="d-none" id="advanced_row">
+                            <div class="form-row" id="output_row">
+                                <div class="col" id="bitrate_col">
+                                    <label for="#template_bitrate">Audio bitrate***</label>
+                                    <input type="text" class="form-control num_input" id="template_bitrate" />
+                                </div>
+                                <div class="col videocol d-none">
+                                    <label for="template_width">Video width (in pixels)</label>
+                                    <input type="text" class="form-control num_input" id="template_width" />
+                                </div>
+                                <div class="col videocol d-none">
+                                    <label for="template_height">Video height (in pixels)</label>
+                                    <input type="text" class="form-control num_input" id="template_height" />
+                                </div>
+                                <div class="col videocol d-none">
+                                    <label for="#template_resolution">Resolution****</label>
+                                    <select class="custom-select" id="template_resolution">
+                                        <option value="best">Best</option>
+                                        <option value="7680;4320">8K UHD</option>
+                                        <option value="3840;2160">4K UHD</option>
+                                        <option value="1920;1080" selected>FHD</option>
+                                        <option value="1280;720">HD</option>
+                                        <option value="720;480">SD</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row" id="proxyrow">
+                                <div class="col">
+                                    <label for="#proxy_status">Enable proxy</label>
+                                    <select id="proxy_status" class="custom-select">
+                                        <option value="false" selected>False</option>
+                                        <option value="true">True</option>
+                                    </select>
+                                </div>
+                                <div class="col d-none">
+                                    <label for="#proxy_type">Select proxy type</label>
+                                    <select id="proxy_type" class="custom-select">
+                                        <option value="HTTP" selected>HTTP</option>
+                                        <option value="HTTPS">HTTPS</option>
+                                        <option value="SOCKS5">SOCKS5</option>
+                                    </select>
+                                </div>
+                                <div class="col d-none">
+                                    <label for="#proxy_address">Enter proxy address</label>
+                                    <input type="text" class="form-control" id="proxy_address" />
+                                </div>
+                                <div class="col d-none">
+                                    <label for="#proxy_port">Enter proxy port</label>
+                                    <input type="text" class="form-control num_input" id="proxy_port" />
+                                </div>
+                                <div class="col d-none">
+                                    <label for="#proxy_username">Enter proxy username</label>
+                                    <input type="text" class="form-control" id="proxy_username" />
+                                </div>
+                                <div class="col d-none">
+                                    <label for="#proxy_password">Enter proxy password</label>
+                                    <input type="text" class="form-control" id="proxy_password" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col">
+                                <button type="button" class="btn btn-success" id="advanced_toggle">Show advanced</button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col">
+                                <p class="float-left">
+                                    * (absolute path starting with <code>/</code> or <code>drive_letter:\</code> or a relative path from the root directory)
+                                    <br />
+                                    ** (More info about name formatting <a target="_blank"
+    href="https://github.com/yt-dlp/yt-dlp#format-selection">here</a>)
+                                    <br />
+                                    *** (Leave empty to use best bitrate; More info about bitrates <a target="_blank" href="https://en.wikipedia.org/wiki/Bit_rate">here</a>)
+                                    <br />
+                                    **** (More info on resolutions <a target="_blank" href="https://levvvel.com/169-resolutions/">here</a>)
+                                </p>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button"
+                            id="add_template_btn"
+                            class="btn templatebtn btn-primary">Add template</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

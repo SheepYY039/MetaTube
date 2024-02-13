@@ -3,11 +3,11 @@
   color: #eee;
 }
 
-[data-theme="dark"] .darkanchor {
+[data-theme="dark"] .dark_anchor {
   color: #8dc6ff;
 }
 
-[data-theme="dark"] .darkanchor:hover {
+[data-theme="dark"] .dark_anchor:hover {
   color: #fff;
 }
 
@@ -19,13 +19,13 @@
   background-color: #333 !important;
 }
 
-[data-theme="dark"] #outputfolderbtn {
+[data-theme="dark"] #output_folder_btn {
   border-color: #eee;
 }
 
 [data-theme="dark"] .bg-white,
 [data-theme="dark"] .dropdown-item:hover,
-[data-theme="dark"] #outputfolderbtn:hover {
+[data-theme="dark"] #output_folder_btn:hover {
   background-color: #000 !important;
 }
 
@@ -43,22 +43,22 @@
 
 [data-theme="dark"] .modal-content,
 [data-theme="dark"] .dropdown-menu,
-[data-theme="dark"] #audioplayer,
+[data-theme="dark"] #audio_player,
 [data-theme="dark"] .popover,
 [data-theme="dark"] .popover-header {
   background-color: #333;
 }
 
 [data-theme="dark"] .navbar-nav > .nav-item > a,
-[data-theme="dark"] .addfolder:hover,
-[data-theme="dark"] .removefolder:hover {
+[data-theme="dark"] .add_folder:hover,
+[data-theme="dark"] .remove_folder:hover {
   color: #9d9a9a !important;
 }
 
 [data-theme="dark"] .table-hover > tbody > tr:hover,
 [data-theme="dark"] .aplayer-list > ol > li:hover,
 [data-theme="dark"] .aplayer-list-light,
-[data-theme="dark"] .selectedrow {
+[data-theme="dark"] .selected_row {
   background-color: #281f1f !important;
 }
 
@@ -68,7 +68,7 @@
 [data-theme="dark"] .input-group-text,
 [data-theme="dark"] #switchlabel,
 [data-theme="dark"] #item_filepath,
-[data-theme="dark"] #outputfolderbtn,
+[data-theme="dark"] #output_folder_btn,
 [data-theme="dark"] .nav-tabs > .nav-item > .nav-link {
   background-color: #333;
   color: white;
