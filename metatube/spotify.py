@@ -26,7 +26,7 @@ class SpotifyMetadata:
         try:
             self.spotify = spotipy.Spotify(
                 auth_manager=SpotifyClientCredentials(
-                    client_id=client_id, client_secret=client_secret
+                    # client_id=client_id, client_secret=client_secret
                 )
             )
         except SpotifyOauthError as e:
